@@ -1,0 +1,27 @@
+{
+  "name": "nimbo-tt",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/shared",
+    "packages/shell",
+    "packages/client",
+    "packages/server",
+    "app"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w app",
+    "dev:server": "npm run dev -w packages/server",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\"",
+    "build": "npm run build -w packages/shared && npm run build -w app",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "~6.0.2"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "paths": {
+      "@nimbo-tt/shell": ["../packages/shell"],
+      "@nimbo-tt/shell/*": ["../packages/shell/*"],
+      "@tax/client": ["../packages/client"],
+      "@tax/client/*": ["../packages/client/*"],
+      "@nimbus/engine": ["../packages/shared/src"]
+    },
+    "baseUrl": "."
+  },
+  "include": ["src"]
+}

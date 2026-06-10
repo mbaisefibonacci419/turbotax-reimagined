@@ -1,0 +1,35 @@
+node_modules/
+dist/
+.env
+*.local
+
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+
+# SQLite database files
+server/data/*.db
+server/data/*.db-shm
+server/data/*.db-wal
+
+# Claude project files
+.claude/
+
+# Test artifacts
+client/playwright-report/
+client/test-results/
+
+# AI eval scorecards (contain model-specific results, regenerated on demand)
+evals/*.json
+
+# Internal audit & review docs
+client/SECURITY-AUDIT*.md
+client/UX-REVIEW*.md
+*.rtf
+
+# Python venv for Docling PDF extraction
+.docling-venv/
+
+# Archive (private files, research, strategy, test data)
+Archive/
