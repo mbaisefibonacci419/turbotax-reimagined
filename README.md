@@ -1,4 +1,4 @@
-# Nimbo TT
+# Re-imagined TT
 
 Re-imagined TTO tax prep based on (but not entirely On) the [IRS drect file](https://github.com/IRS-Public/direct-file)  open-source engine. This is a  browser-based tax engine re-written in Typescript with Claude an wrapped around our TTO shell to explore a new tax prep flow from Navigation to Search to the Agentic experience. Tax data never leaves your browser — all calculations happen client-side using my `@nimbus/engine` library (adapted from the IRS Driect-file), encrypted at rest with AES-256-GCM.
 

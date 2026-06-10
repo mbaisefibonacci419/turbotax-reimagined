@@ -333,7 +333,7 @@ export default function DashboardPage({ lockMode, onUnlock, lockError }: Dashboa
         {/* Header */}
         <div className="mb-2 flex items-start justify-between">
           <div>
-            <h1 className="text-4xl sm:text-5xl font-bold"><span className="text-primary-500">Ni</span><span className="text-slate-100">mbus</span></h1>
+            <h1 className="text-4xl sm:text-5xl font-bold"><span className="text-primary-500">My</span><span className="text-slate-100">TurboTax</span></h1>
             <p className="text-slate-400 text-sm">TY2025</p>
           </div>
           <DashboardThemeToggle />

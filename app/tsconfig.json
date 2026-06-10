@@ -10,7 +10,11 @@
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
     "paths": {
       "@nimbo-tt/shell": ["../packages/shell"],
       "@nimbo-tt/shell/*": ["../packages/shell/*"],
