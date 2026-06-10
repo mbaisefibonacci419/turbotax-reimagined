@@ -2,8 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
+import { suppressSyncfusionLicense } from "@tax/client/src/utils/suppressSyncfusionLicense";
 import "@tax/client/src/styles/globals.css";
 import { App } from "./App";
+
+// Block Syncfusion's unlicensed banner/modal before any chart component mounts.
+suppressSyncfusionLicense();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
