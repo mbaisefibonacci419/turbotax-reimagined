@@ -8,10 +8,10 @@ dist/
 # OS files
 .DS_Store
 
-# SQLite database files
-server/data/*.db
-server/data/*.db-shm
-server/data/*.db-wal
+# SQLite database files (match anywhere, including packages/server/data/)
+*.db
+*.db-shm
+*.db-wal
 
 # Claude project files
 .claude/
