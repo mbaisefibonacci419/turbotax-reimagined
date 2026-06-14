@@ -39,10 +39,10 @@ export default function WelcomeStep() {
         <ModeCard
           selected={selected === 'interview'}
           onSelect={() => setSelected('interview')}
-          icon={<ListChecks className="w-5 h-5 text-white" />}
-          iconBg="#00A888"
+          // icon={<ListChecks className="w-5 h-5 text-white" />}
+          // iconBg="#00A888"
           title="Interview"
-          description="A guided step-by-step interview that walks you through each section of your tax return."
+          description="Use our classic guided step-by-step interview that walks you through each section of your tax return."
           bullets={[]}
         />
 
@@ -50,10 +50,10 @@ export default function WelcomeStep() {
         <ModeCard
           selected={selected === 'agent'}
           onSelect={() => setSelected('agent')}
-          icon={<MessageCircle className="w-5 h-5 text-white" />}
-          iconBg="var(--color-action-standard)"
-          title="Agent"
-          description="An AI assistant guides you conversationally, asking questions, explaining what matters, and filling in forms for you."
+          // icon={<MessageCircle className="w-5 h-5 text-white" />}
+          // iconBg="var(--color-action-standard)"
+          title="Immersive"
+          description="Our co-pilot guides you conversationally, by prepping your docs, and asking questions, explaining what matters, and filling in forms for you."
           bullets={[]}
         />
 
@@ -61,8 +61,8 @@ export default function WelcomeStep() {
         <ModeCard
           selected={selected === 'forms'}
           onSelect={() => setSelected('forms')}
-          icon={<ClipboardList className="w-5 h-5 text-white" />}
-          iconBg="#5D686F"
+          // icon={<ClipboardList className="w-5 h-5 text-white" />}
+          // iconBg="#5D686F"
           title="Forms"
           description="Work directly with your tax forms, see every line, edit values, and view the actual IRS documents as you go."
           bullets={[]}
@@ -94,12 +94,13 @@ function ModeCard({
 }: {
   selected: boolean;
   onSelect: () => void;
-  icon: React.ReactNode;
-  iconBg: string;
+  icon?: React.ReactNode;
+  iconBg?: string;
   title: string;
   description: string;
   bullets: string[];
 }) {
+  const accentColor = iconBg ?? 'var(--color-action-standard)';
   return (
     <button
       type="button"
@@ -117,9 +118,11 @@ function ModeCard({
         </span>
       )}
       <div className="flex items-center gap-3 mb-3">
-        <span className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: iconBg }}>
-          {icon}
-        </span>
+        {icon && (
+          <span className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: accentColor }}>
+            {icon}
+          </span>
+        )}
         <h3 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>{title}</h3>
       </div>
       <p className="text-sm leading-relaxed mb-3 flex-1" style={{ color: 'var(--color-text-secondary)' }}>
@@ -128,7 +131,7 @@ function ModeCard({
       <ul className="text-xs space-y-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
         {bullets.map((b, i) => (
           <li key={i} className="flex items-start gap-2">
-            <span className="mt-0.5" style={{ color: iconBg }}>•</span>
+            <span className="mt-0.5" style={{ color: accentColor }}>•</span>
             {b}
           </li>
         ))}

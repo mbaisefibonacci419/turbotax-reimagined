@@ -25,6 +25,55 @@ import ThinkingIndicator from './ThinkingIndicator';
 import ResizeHandle from '../common/ResizeHandle';
 
 
+/**
+ * Extract the human-readable `message` field from a (possibly partial)
+ * streaming JSON response.
+ *
+ * The LLM streams its answer as raw JSON (`{"message":"...","options":[...]}`).
+ * Showing those tokens verbatim makes the bubble flash raw JSON braces while
+ * the (often large) `options`/`actions` arrays stream in. Instead we pull just
+ * the `message` string — even while it's still unterminated — so the bubble
+ * shows clean prose immediately and stays stable as the rest of the JSON arrives.
+ *
+ * Returns `null` when the message field hasn't started streaming yet, so the
+ * caller can keep showing the thinking indicator instead of an empty bubble.
+ */
+function extractStreamingMessage(raw: string): string | null {
+  const text = raw.trimStart();
+
+  // Plain-text stream (model didn't wrap in JSON) — show as-is.
+  if (!text.startsWith('{') && !text.startsWith('```')) {
+    return raw;
+  }
+
+  const keyMatch = text.match(/"message"\s*:\s*"/);
+  if (!keyMatch || keyMatch.index === undefined) return null; // message not started yet
+
+  const start = keyMatch.index + keyMatch[0].length;
+  let result = '';
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '\\') {
+      const next = text[i + 1];
+      if (next === undefined) break; // escape char at buffer edge — wait for more tokens
+      switch (next) {
+        case 'n': result += '\n'; break;
+        case 't': result += '\t'; break;
+        case 'r': result += '\r'; break;
+        case '"': result += '"'; break;
+        case '\\': result += '\\'; break;
+        case '/': result += '/'; break;
+        default: result += next;
+      }
+      i++;
+      continue;
+    }
+    if (ch === '"') break; // closing quote — message string complete
+    result += ch;
+  }
+  return result;
+}
+
 interface ChatPanelProps {
   panelWidth?: number;
   isDragging?: boolean;
@@ -252,19 +301,31 @@ export default function ChatPanel({ panelWidth, isDragging, onResizeStart, onRes
                     />
                   ))}
 
-                  {/* Streaming response — shows tokens as they arrive */}
-                  {isLoading && streamingContent ? (
-                    <div className="flex justify-start mb-3">
-                      <div className="max-w-[85%] rounded-xl px-3.5 py-2.5" style={{ background: 'var(--color-container-background-accent)', border: '1px solid var(--color-container-border-primary)' }}>
-                        <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--color-text-primary)' }}>{streamingContent}<span className="inline-block w-1.5 h-4 animate-pulse ml-0.5 align-text-bottom rounded-sm" style={{ background: 'var(--color-action-standard)' }} /></p>
-                      </div>
-                    </div>
-                  ) : isLoading && (
-                    <ThinkingIndicator
-                      userMessage={messages.filter((m) => m.role === 'user').pop()?.content}
-                      section={section}
-                    />
-                  )}
+                  {/* Streaming response — render the message field cleanly as
+                      tokens arrive, not the raw JSON wrapper. */}
+                  {(() => {
+                    if (!isLoading) return null;
+                    const streamingMessage = streamingContent
+                      ? extractStreamingMessage(streamingContent)
+                      : null;
+                    if (streamingMessage && streamingMessage.trim().length > 0) {
+                      return (
+                        <div className="flex justify-start mb-3">
+                          <div className="max-w-[85%] rounded-2xl px-3.5 py-2.5" style={{ background: '#F0F5FA', border: '1px solid #D5E2EE', boxShadow: '0 1px 2px rgba(15, 35, 60, 0.06)' }}>
+                            <p className="text-sm whitespace-pre-wrap" style={{ color: '#1F2A30' }}>{streamingMessage}<span className="inline-block w-1.5 h-4 animate-pulse ml-0.5 align-text-bottom rounded-sm" style={{ background: '#0077C5' }} /></p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    // Either no tokens yet, or the JSON wrapper has started but
+                    // the message field hasn't — keep showing the thinking dots.
+                    return (
+                      <ThinkingIndicator
+                        userMessage={messages.filter((m) => m.role === 'user').pop()?.content}
+                        section={section}
+                      />
+                    );
+                  })()}
 
                   {/* Error display */}
                   {error && (

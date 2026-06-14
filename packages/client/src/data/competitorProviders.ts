@@ -14,17 +14,6 @@ export interface CompetitorProvider {
 
 export const COMPETITOR_PROVIDERS: CompetitorProvider[] = [
   {
-    id: 'turbotax',
-    name: 'TurboTax',
-    instructions: [
-      'Log in to your TurboTax account at myturbotax.intuit.com',
-      'Find your completed return under "Tax Home"',
-      'Click "Download/print return (PDF)"',
-      'Save the PDF file to your computer',
-    ],
-    pdfHints: ['TurboTax', 'Intuit'],
-  },
-  {
     id: 'hrblock',
     name: 'H&R Block',
     instructions: [

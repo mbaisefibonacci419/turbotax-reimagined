@@ -16,13 +16,13 @@ const VARIANT_STYLES = {
     icon: Info,
   },
   warning: {
-    bg: 'bg-alert-warn-bg/15 border-alert-warn-border/30',
+    bg: 'bg-alert-warn-bg/50 border-alert-warn-border/70',
     title: 'text-alert-warn-text',
     body: 'text-alert-warn-body',
     icon: AlertTriangle,
   },
   tip: {
-    bg: 'bg-alert-nudge-bg/15 border-alert-nudge-border/30',
+    bg: 'bg-alert-nudge-bg/50 border-alert-nudge-border/70',
     title: 'text-alert-nudge-text',
     body: 'text-alert-nudge-body',
     icon: Lightbulb,

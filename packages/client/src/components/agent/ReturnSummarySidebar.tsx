@@ -23,12 +23,12 @@ function SkillStatusIcon({ skillId, agentState }: { skillId: string; agentState:
     return <Check className="w-3.5 h-3.5 text-emerald-400" />;
   }
   if (skillId === agentState.activeSkill) {
-    return <CircleDot className="w-3.5 h-3.5 text-telos-blue-400 animate-pulse" />;
+    return <CircleDot className="w-3.5 h-3.5 animate-pulse" style={{ color: 'var(--color-action-standard)' }} />;
   }
   if (agentState.skipped.includes(skillId)) {
-    return <Circle className="w-3.5 h-3.5 text-slate-600" />;
+    return <Circle className="w-3.5 h-3.5" style={{ color: 'var(--color-text-tertiary)' }} />;
   }
-  return <Circle className="w-3.5 h-3.5 text-slate-500" />;
+  return <Circle className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />;
 }
 
 function SkillSummaryLine({ skill, agentState }: { skill: SkillRegistryEntry; agentState: AgentState }) {
@@ -36,21 +36,22 @@ function SkillSummaryLine({ skill, agentState }: { skill: SkillRegistryEntry; ag
   const isActive = skill.id === agentState.activeSkill;
   const isSkipped = agentState.skipped.includes(skill.id);
 
+  const textColor = isActive || isCompleted
+    ? 'var(--color-text-primary)'
+    : isSkipped
+      ? 'var(--color-text-tertiary)'
+      : 'var(--color-text-secondary)';
+
   return (
     <div
       className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors ${
-        isActive
-          ? 'bg-telos-blue-600/10 text-telos-blue-300'
-          : isCompleted
-            ? 'text-slate-300'
-            : isSkipped
-              ? 'text-slate-600 line-through'
-              : 'text-slate-500'
-      }`}
+        isActive ? 'bg-telos-blue-600/10' : ''
+      } ${isSkipped ? 'line-through' : ''}`}
+      style={{ color: textColor }}
     >
       <SkillStatusIcon skillId={skill.id} agentState={agentState} />
       <span className="truncate">{skill.domain}</span>
-      {isActive && <ChevronRight className="w-3 h-3 ml-auto text-telos-blue-400" />}
+      {isActive && <ChevronRight className="w-3 h-3 ml-auto" style={{ color: 'var(--color-action-standard)' }} />}
     </div>
   );
 }
@@ -146,7 +147,7 @@ export default function ReturnSummarySidebar({
           <div className={`rounded-lg px-3 py-2.5 text-center ${
             isRefund ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-amber-500/10 border border-amber-500/20'
           }`}>
-            <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-0.5">
+            <div className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: 'var(--color-text-secondary)' }}>
               {isRefund ? 'Estimated Refund' : 'Estimated Owed'}
             </div>
             <div className={`text-lg font-bold flex items-center justify-center gap-1 ${
@@ -166,13 +167,15 @@ export default function ReturnSummarySidebar({
       <div className="px-3 pb-3 flex flex-col gap-1.5">
         <button
           onClick={onSwitchToInterview}
-          className="w-full text-xs text-slate-400 hover:text-slate-200 py-1.5 px-2 rounded hover:bg-surface-700 transition-colors text-left"
+          className="w-full text-xs py-1.5 px-2 rounded hover:bg-surface-700 transition-colors text-left"
+          style={{ color: 'var(--color-text-secondary)' }}
         >
           Switch to Interview
         </button>
         <button
           onClick={onSwitchToForms}
-          className="w-full text-xs text-slate-400 hover:text-slate-200 py-1.5 px-2 rounded hover:bg-surface-700 transition-colors text-left"
+          className="w-full text-xs py-1.5 px-2 rounded hover:bg-surface-700 transition-colors text-left"
+          style={{ color: 'var(--color-text-secondary)' }}
         >
           Switch to Forms
         </button>

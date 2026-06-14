@@ -289,7 +289,7 @@ export default function ChatInput({ onSend, onAttachFile, disabled, isLoading, o
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={isListening ? 'Listening...' : 'Ask about your taxes or enter data...'}
+          placeholder={isListening ? 'Listening...' : 'Ask about your taxes or upload your forms...'}
           disabled={disabled}
           rows={1}
           className="w-full bg-transparent px-4 pt-3 pb-1 text-sm text-slate-100

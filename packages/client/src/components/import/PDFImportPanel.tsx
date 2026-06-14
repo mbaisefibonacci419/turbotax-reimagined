@@ -175,7 +175,7 @@ export default function PDFImportPanel({ onBack }: PDFImportPanelProps) {
             Upload a tax form PDF or photo. Supports 20 form types.
           </p>
 
-          <div className="rounded-xl border bg-amber-500/10 border-amber-500/20 text-sm text-amber-300 p-3">
+          <div className="rounded-xl border bg-amber-500/20 border-amber-500/40 text-sm text-amber-300 p-3">
             <strong>Note:</strong> Digital PDFs are extracted instantly. Scanned documents and photos
             can be processed with OCR, then enhanced with AI for improved accuracy.
             Always verify extracted data against your original form.

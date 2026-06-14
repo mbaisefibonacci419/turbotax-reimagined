@@ -15,6 +15,13 @@ export interface StarterPromptSet {
 
 const STEP_PROMPTS: Record<string, StarterPromptSet> = {
   // My Info
+  welcome: {
+    prompts: [
+      'Import my tax docs to get started',
+      'What documents do I need to file?',
+      'Walk me through how this works',
+    ],
+  },
   filing_status: {
     prompts: [
       'What filing status should I choose?',
@@ -359,11 +366,18 @@ export interface NudgePrompt {
 }
 
 /**
+ * The "lead" prompt always shown first in the empty-state assistant, no matter
+ * which step/tool/section the user opened the assistant from. Importing docs is
+ * the fastest way to get started, so it anchors the suggestion list.
+ */
+export const LEAD_PROMPT = 'Import my tax docs to get started';
+
+/**
  * Resolve starter prompts for the current step/tool.
- * Priority: nudge prompts (if any) → tool ID → step ID → section → global default.
+ * Priority: lead prompt (always first) → nudge prompts (if any) → tool ID →
+ * step ID → section → global default.
  *
- * When nudges are active, up to 2 nudge-derived prompts are prepended,
- * replacing the least-relevant static prompts to keep the total at 3.
+ * The list is always capped at 3 and de-duplicated.
  */
 export function getStarterPrompts(stepId: string, section: string, nudgePrompts?: NudgePrompt[]): string[] {
   // Resolve the base static prompts
@@ -373,14 +387,21 @@ export function getStarterPrompts(stepId: string, section: string, nudgePrompts?
   else if (SECTION_PROMPTS[section]) base = SECTION_PROMPTS[section].prompts;
   else base = DEFAULT_PROMPTS.prompts;
 
-  // Prepend nudge-derived prompts (max 2), trimming static prompts to keep total at 3
-  if (nudgePrompts && nudgePrompts.length > 0) {
-    const nudgeTexts = nudgePrompts.slice(0, 2).map((n) => n.prompt);
-    const remaining = base.slice(0, 3 - nudgeTexts.length);
-    return [...nudgeTexts, ...remaining];
-  }
+  // Lead is always first; fill the remaining 2 slots with nudges, then context.
+  const nudgeTexts = (nudgePrompts ?? []).slice(0, 1).map((n) => n.prompt);
+  const candidates = [LEAD_PROMPT, ...nudgeTexts, ...base];
 
-  return base;
+  // De-duplicate (case-insensitive) and cap at 3.
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const prompt of candidates) {
+    const key = prompt.trim().toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(prompt);
+    if (result.length === 3) break;
+  }
+  return result;
 }
 
 /**

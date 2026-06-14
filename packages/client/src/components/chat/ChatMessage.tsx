@@ -18,6 +18,14 @@ import ActionPreview from './ActionPreview';
 import MarkdownMessage from './MarkdownMessage';
 import { injectStepLinks } from '../../services/stepLinkInjector';
 
+// ─── Chat bubble color scheme ────────────────────
+// User question: solid Intuit blue with white text.
+// AI response: light blue tint with dark, high-contrast text.
+const USER_BUBBLE_BG = '#0077C5';
+const AI_BUBBLE_BG = '#F0F5FA';
+const AI_BUBBLE_BORDER = '#D5E2EE';
+const AI_BUBBLE_TEXT = '#1F2A30';
+
 interface Props {
   message: ChatMessageUI;
   isLastAssistant?: boolean;
@@ -44,21 +52,21 @@ function OptionPills({
 
   if (!multiSelect) {
     return (
-      <div className="mt-3 pt-2.5 border-t border-slate-600/30 flex flex-wrap gap-2">
+      <div className="mt-3 pt-2.5 flex flex-wrap gap-2" style={{ borderTop: `1px solid ${AI_BUBBLE_BORDER}` }}>
         {options.map((opt, idx) => (
           <button
             key={idx}
             onClick={() => onFollowUp(opt.value ?? opt.label)}
             className="group/pill flex flex-col items-start px-3.5 py-2 rounded-xl
-                       bg-telos-blue-600/10 border border-telos-blue-500/30
-                       hover:bg-telos-blue-600/20 hover:border-telos-blue-400/50
+                       border border-[#0077C5]/40 bg-white
+                       hover:bg-[#0077C5]/10 hover:border-[#0077C5]
                        active:scale-[0.97] transition-all cursor-pointer text-left"
           >
-            <span className="text-sm font-medium text-telos-blue-200 group-hover/pill:text-telos-blue-100">
+            <span className="text-sm font-semibold text-[#0066AB]">
               {opt.label}
             </span>
             {opt.description && (
-              <span className="text-[11px] text-slate-400 mt-0.5 leading-tight">
+              <span className="text-[11px] mt-0.5 leading-tight" style={{ color: '#5D686F' }}>
                 {opt.description}
               </span>
             )}
@@ -98,10 +106,10 @@ function OptionPills({
   };
 
   return (
-    <div className="mt-3 pt-2.5 border-t border-slate-600/30">
+    <div className="mt-3 pt-2.5" style={{ borderTop: `1px solid ${AI_BUBBLE_BORDER}` }}>
       <div className="flex items-center gap-1.5 mb-2">
-        <CheckCircle2 className="w-3.5 h-3.5 text-telos-blue-400" />
-        <span className="text-[11px] font-medium text-slate-400">
+        <CheckCircle2 className="w-3.5 h-3.5 text-[#0077C5]" />
+        <span className="text-[11px] font-semibold" style={{ color: '#5D686F' }}>
           Select all that apply
         </span>
       </div>
@@ -116,23 +124,23 @@ function OptionPills({
               className={`group/pill flex items-start gap-2 px-3.5 py-2 rounded-xl
                          border transition-all cursor-pointer text-left active:scale-[0.97]
                          ${isSelected
-                           ? 'bg-telos-blue-600/25 border-telos-blue-400/60 ring-1 ring-telos-blue-500/30'
-                           : 'bg-telos-blue-600/10 border-telos-blue-500/30 hover:bg-telos-blue-600/20 hover:border-telos-blue-400/50'
+                           ? 'bg-[#0077C5]/12 border-[#0077C5] ring-1 ring-[#0077C5]/30'
+                           : 'bg-white border-[#0077C5]/40 hover:bg-[#0077C5]/10 hover:border-[#0077C5]'
                          }`}
             >
               <div className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors
                               ${isSelected
-                                ? 'bg-telos-blue-500 border-telos-blue-400'
-                                : 'border-slate-500 bg-transparent'
+                                ? 'bg-[#0077C5] border-[#0077C5]'
+                                : 'border-[#0077C5]/50 bg-transparent'
                               }`}>
                 {isSelected && <Check className="w-3 h-3 text-white" />}
               </div>
               <div className="flex flex-col">
-                <span className={`text-sm font-medium ${isSelected ? 'text-telos-blue-100' : 'text-telos-blue-200'}`}>
+                <span className="text-sm font-semibold text-[#0066AB]">
                   {opt.label}
                 </span>
                 {opt.description && (
-                  <span className="text-[11px] text-slate-400 mt-0.5 leading-tight">
+                  <span className="text-[11px] mt-0.5 leading-tight" style={{ color: '#5D686F' }}>
                     {opt.description}
                   </span>
                 )}
@@ -145,8 +153,8 @@ function OptionPills({
         <button
           onClick={handleSubmit}
           disabled={selected.size === 0}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium
-                     bg-telos-blue-600 hover:bg-telos-blue-500 text-white
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold
+                     bg-[#0077C5] hover:bg-[#0066AB] text-white
                      disabled:opacity-40 disabled:cursor-not-allowed
                      transition-colors active:scale-[0.97]"
         >
@@ -157,8 +165,8 @@ function OptionPills({
           <button
             onClick={handleNone}
             className="text-[11px] px-3 py-1.5 rounded-lg
-                       text-slate-400 hover:text-slate-300 hover:bg-slate-700/50
-                       transition-colors cursor-pointer"
+                       hover:bg-black/5 transition-colors cursor-pointer"
+            style={{ color: '#5D686F' }}
           >
             {noneOption.label}
           </button>
@@ -273,19 +281,20 @@ export default function ChatMessage({
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
-        className={`group relative max-w-[85%] rounded-xl px-3.5 py-2.5 ${
+        className="group relative max-w-[85%] rounded-2xl px-3.5 py-2.5"
+        style={
           isUser
-            ? 'bg-telos-blue-600/30 border border-telos-blue-600/20 text-slate-100'
-            : 'bg-surface-700 border border-slate-600/50 text-slate-200'
-        }`}
+            ? { background: USER_BUBBLE_BG, color: '#FFFFFF', border: `1px solid ${USER_BUBBLE_BG}` }
+            : { background: AI_BUBBLE_BG, color: AI_BUBBLE_TEXT, border: `1px solid ${AI_BUBBLE_BORDER}`, boxShadow: '0 1px 2px rgba(15, 35, 60, 0.06)' }
+        }
       >
         {/* Attachment card (user messages with documents) */}
         {isUser && message.attachment && (
           <div className="mb-2 flex items-center gap-2 text-xs">
-            <FileText className="w-4 h-4 text-telos-blue-400 flex-shrink-0" />
-            <span className="text-slate-300 truncate max-w-[160px]">{message.attachment.fileName}</span>
+            <FileText className="w-4 h-4 text-white/80 flex-shrink-0" />
+            <span className="text-white/90 truncate max-w-[160px]">{message.attachment.fileName}</span>
             {message.attachment.status === 'extracting' && (
-              <Loader2 className="w-3.5 h-3.5 text-telos-blue-400 animate-spin flex-shrink-0" />
+              <Loader2 className="w-3.5 h-3.5 text-white/80 animate-spin flex-shrink-0" />
             )}
             {message.attachment.status === 'ocr-processing' && (
               <span className="text-[10px] text-amber-400 flex-shrink-0">
@@ -314,22 +323,22 @@ export default function ChatMessage({
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEdit(); }
                 if (e.key === 'Escape') cancelEditing();
               }}
-              className="w-full bg-transparent text-sm text-slate-100 leading-relaxed resize-none
+              className="w-full bg-transparent text-sm text-white leading-relaxed resize-none
                          focus:outline-none"
             />
             <div className="flex items-center justify-end gap-2 mt-3">
               <button
                 onClick={cancelEditing}
-                className="text-xs font-medium px-3.5 py-1.5 rounded-full text-slate-300 hover:text-slate-100
-                           bg-surface-600 hover:bg-surface-500 transition-colors"
+                className="text-xs font-medium px-3.5 py-1.5 rounded-full text-white/80 hover:text-white
+                           bg-white/15 hover:bg-white/25 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={saveEdit}
                 disabled={!editText.trim()}
-                className="text-xs font-medium px-3.5 py-1.5 rounded-full text-white
-                           bg-slate-200 text-surface-900 hover:bg-surface-800 transition-colors
+                className="text-xs font-medium px-3.5 py-1.5 rounded-full
+                           bg-white text-[#0077C5] hover:bg-white/90 transition-colors
                            disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Send
@@ -345,7 +354,7 @@ export default function ChatMessage({
         )}
 
         {message.verification?.footnote && (
-          <div className="mt-1.5 text-[10px] text-amber-400/70 italic border-t border-amber-400/20 pt-1">
+          <div className="mt-1.5 text-[10px] italic border-t pt-1" style={{ color: '#B45309', borderColor: 'rgba(180, 83, 9, 0.25)' }}>
             {message.verification.footnote}
           </div>
         )}
@@ -375,14 +384,14 @@ export default function ChatMessage({
 
         {/* Follow-up chips (last assistant message only) */}
         {isLastAssistant && message.followUpChips && message.followUpChips.length > 0 && (
-          <div className="mt-2.5 pt-2 border-t border-slate-600/30 flex flex-wrap gap-1.5">
+          <div className="mt-2.5 pt-2 flex flex-wrap gap-1.5" style={{ borderTop: `1px solid ${AI_BUBBLE_BORDER}` }}>
             {message.followUpChips.map((chip, idx) => (
               <button
                 key={idx}
                 onClick={() => onFollowUp(chip)}
                 className="text-[11px] px-2.5 py-1 rounded-full
-                           bg-telos-blue-500/10 border border-telos-blue-500/25
-                           text-telos-blue-300 hover:bg-telos-blue-500/20 hover:border-telos-blue-500/40
+                           bg-white border border-[#0077C5]/40
+                           text-[#0066AB] font-medium hover:bg-[#0077C5]/10 hover:border-[#0077C5]
                            transition-colors cursor-pointer"
               >
                 {chip}
@@ -471,12 +480,12 @@ export default function ChatMessage({
           /* User message: timestamp, retry, edit, copy */
           !isEditing && (
           <div className="flex items-center justify-end gap-0.5 mt-1.5">
-            <span className="text-[10px] text-telos-blue-400/60 mr-0.5">
+            <span className="text-[10px] text-white/70 mr-0.5">
               {formatTime(message.timestamp)}
             </span>
             <button
               onClick={() => onRetry(message.id)}
-              className="p-0.5 rounded text-telos-blue-400/40 opacity-0 group-hover:opacity-100 hover:text-telos-blue-300 transition-all"
+              className="p-0.5 rounded text-white/60 opacity-0 group-hover:opacity-100 hover:text-white transition-all"
               aria-label="Retry this message"
               title="Retry"
             >
@@ -484,7 +493,7 @@ export default function ChatMessage({
             </button>
             <button
               onClick={startEditing}
-              className="p-0.5 rounded text-telos-blue-400/40 opacity-0 group-hover:opacity-100 hover:text-telos-blue-300 transition-all"
+              className="p-0.5 rounded text-white/60 opacity-0 group-hover:opacity-100 hover:text-white transition-all"
               aria-label="Edit message"
               title="Edit"
             >
@@ -492,12 +501,12 @@ export default function ChatMessage({
             </button>
             <button
               onClick={handleCopy}
-              className="p-0.5 rounded text-telos-blue-400/40 opacity-0 group-hover:opacity-100 hover:text-telos-blue-300 transition-all"
+              className="p-0.5 rounded text-white/60 opacity-0 group-hover:opacity-100 hover:text-white transition-all"
               aria-label="Copy message"
               title="Copy to clipboard"
             >
               {copied
-                ? <Check className="w-3 h-3 text-emerald-400" />
+                ? <Check className="w-3 h-3 text-white" />
                 : <Copy className="w-3 h-3" />
               }
             </button>

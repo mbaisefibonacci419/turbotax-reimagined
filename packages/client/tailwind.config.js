@@ -1,8 +1,34 @@
 /** @type {import('tailwindcss').Config} */
+import colors from 'tailwindcss/colors';
 
 function cssVar(name) {
   return `rgb(var(--${name}) / <alpha-value>)`;
 }
+
+/**
+ * Light-theme readability fix.
+ *
+ * Many components use the light pastel text shades (200/300) of semantic color
+ * scales (e.g. `text-amber-300`, `text-emerald-300`) which were designed for a
+ * dark surface. On this light-only canvas those shades are nearly invisible.
+ *
+ * `readableText` spreads the full default Tailwind palette — so solid fills and
+ * borders that rely on the 400/500/600 shades keep working — and overrides only
+ * the 200/300 shades with an accessible-on-white color (WCAG AA for body text).
+ */
+function readableText(base, textColor) {
+  return { ...base, 200: textColor, 300: textColor };
+}
+
+// Accessible-on-white text colors per semantic family (≥ 4.5:1 contrast).
+const TEXT = {
+  warn: '#b45309',    // amber-700
+  success: '#047857', // emerald-700
+  danger: '#b91c1c',  // red-700
+  info: '#1d4ed8',    // blue-700
+  indigo: '#4338ca',
+  violet: '#6d28d9',
+};
 
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -114,20 +140,37 @@ export default {
           600: cssVar('success-600'),
         },
         emerald: {
+          ...colors.emerald,
+          200: TEXT.success,
+          300: TEXT.success,
           400: cssVar('success-400'),
           500: cssVar('success-500'),
           600: cssVar('success-600'),
         },
+        green: readableText(colors.green, TEXT.success),
+        teal: readableText(colors.teal, TEXT.success),
         warning: {
           400: cssVar('warning-400'),
           500: cssVar('warning-500'),
           600: cssVar('warning-600'),
         },
         amber: {
+          ...colors.amber,
+          200: TEXT.warn,
+          300: TEXT.warn,
           400: cssVar('warning-400'),
           500: cssVar('warning-500'),
           600: cssVar('warning-600'),
         },
+        yellow: readableText(colors.yellow, TEXT.warn),
+        orange: readableText(colors.orange, TEXT.warn),
+        red: readableText(colors.red, TEXT.danger),
+        rose: readableText(colors.rose, TEXT.danger),
+        sky: readableText(colors.sky, TEXT.info),
+        blue: readableText(colors.blue, TEXT.info),
+        indigo: readableText(colors.indigo, TEXT.indigo),
+        violet: readableText(colors.violet, TEXT.violet),
+        purple: readableText(colors.purple, TEXT.violet),
         alert: {
           warn: {
             bg:      cssVar('alert-warn-bg'),

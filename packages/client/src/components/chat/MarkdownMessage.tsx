@@ -97,17 +97,17 @@ function buildComponents(
       const isBlock = className?.startsWith('language-');
       if (isBlock) {
         return (
-          <code className="text-xs font-mono text-telos-blue-300">{children}</code>
+          <code className="text-xs font-mono" style={{ color: '#123964' }}>{children}</code>
         );
       }
       return (
-        <code className="bg-surface-900 text-telos-blue-300 px-1 py-0.5 rounded text-xs font-mono">
+        <code className="px-1 py-0.5 rounded text-xs font-mono" style={{ background: '#E2EAF2', color: '#123964' }}>
           {children}
         </code>
       );
     },
     pre: ({ children }) => (
-      <pre className="bg-surface-900 rounded-lg p-3 overflow-x-auto my-2 text-xs">
+      <pre className="rounded-lg p-3 overflow-x-auto my-2 text-xs" style={{ background: '#E8EEF4' }}>
         {children}
       </pre>
     ),

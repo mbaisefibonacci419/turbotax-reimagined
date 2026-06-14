@@ -225,8 +225,8 @@ export default function WizardLayout({ children }: WizardLayoutProps) {
                 fontWeight: 'var(--weight-demi)',
               }}
             >
-              <span className="hidden sm:inline">Agents Window</span>
-              <span className="sm:hidden">Agents</span>
+              <span className="hidden sm:inline">Immersive Mode</span>
+              <span className="sm:hidden">Immersive</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -267,7 +267,7 @@ export default function WizardLayout({ children }: WizardLayoutProps) {
             >
               {jumpAheadWarning && !isTransitionStep && !activeToolId && (
                 <div className="mb-4 flex items-start gap-2.5 rounded-lg px-4 py-3"
-                  style={{ background: 'rgb(var(--alert-warn-bg) / 0.15)', border: '1px solid rgb(var(--alert-warn-border) / 0.3)' }}
+                  style={{ background: 'rgb(var(--alert-warn-bg) / 0.55)', border: '1px solid rgb(var(--alert-warn-border) / 0.7)' }}
                 >
                   <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'rgb(var(--alert-warn-icon))' }} />
                   <div className="flex-1">

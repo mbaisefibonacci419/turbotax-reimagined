@@ -875,8 +875,17 @@ async function _doSendMessage(
     }
 
     // Agent mode: check if the response (without explicit actions) completed the skill
-    // e.g., user said "No W-2s" → discovery flag set → skill complete
-    if (!response.actions || response.actions.length === 0 || response.actions.every((a) => a.type === 'no_action')) {
+    // e.g., user said "No W-2s" → discovery flag set → skill complete.
+    //
+    // Skip advancement when the assistant is presenting options/choices the user
+    // still needs to act on (e.g., "What do you have handy?" with upload CTAs).
+    // Injecting a proactive "Moving on…" message here would steal last-assistant
+    // status and hide those option pills before the user can use them.
+    const awaitingUserChoice = !!(response.options && response.options.length > 0);
+    if (
+      !awaitingUserChoice &&
+      (!response.actions || response.actions.length === 0 || response.actions.every((a) => a.type === 'no_action'))
+    ) {
       _maybeAdvanceAgentSkill(get);
     }
   } catch (err: any) {
