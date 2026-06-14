@@ -1,0 +1,37 @@
+# Dependencies & build output (regenerated inside the image)
+node_modules
+**/node_modules
+dist
+**/dist
+# Exclude TS incremental cache at ALL levels — stale .tsbuildinfo makes composite
+# builds skip emitting .d.ts, which breaks the server's type resolution of @nimbus/engine.
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Secrets & env files — set these as Railway service variables instead
+**/.env
+*.local
+
+# Python venv for Docling (installed in-image only if enabled)
+.docling-venv
+
+# Git & editor
+.git
+.gitignore
+.DS_Store
+
+# Local SQLite artifacts
+*.db
+*.db-shm
+*.db-wal
+
+# Tests & reports
+**/playwright-report
+**/test-results
+evals/*.json
+
+# Private/internal
+Archive/
+*.rtf
+*.log
+.claude/

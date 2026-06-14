@@ -46,21 +46,21 @@ npm run test -w packages/server # run server tests
 
 ## Deploy to Railway
 
-This repo deploys as a **single Railway service**: the Express server (`packages/server`)
-serves both the `/api` routes and the built Vite frontend (`app/dist`) from the same origin.
+This repo deploys as a **single Railway service** built from a **Dockerfile**: the Express
+server (`packages/server`) serves both the `/api` routes and the built Vite frontend
+(`app/dist`) from the same origin.
 
 Config files (already in the repo):
 
-- `railway.json` — Nixpacks builder, start command, and `/api/health` health check
-- `nixpacks.toml` — pins Node 20 and the native toolchain `better-sqlite3` needs
-- `.nvmrc` — Node version for local parity
+- `Dockerfile` — multi-stage build (engine → `app/dist` → server) on Node 22, with the native
+  toolchain for `better-sqlite3` and a Node heap bump so the Vite build doesn't OOM
+- `railway.toml` — points Railway at the Dockerfile and sets the `/api/health` health check
+- `.dockerignore` — keeps `node_modules`, `dist`, `.env`, and `*.tsbuildinfo` out of the image
 
 ### Notes
 
 - The SQLite DB is used only for rate-limiting and is **ephemeral** (reset on redeploy). No
   volume is required. Tax data stays client-side in the browser.
-- For a **split deploy** (separate frontend + backend services), set `VITE_API_BASE` to the
-  backend URL at build time and add the frontend origin to `ALLOWED_ORIGINS` on the backend.
 
 ### Author
 
