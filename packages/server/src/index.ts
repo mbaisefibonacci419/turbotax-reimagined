@@ -112,8 +112,13 @@ app.get('/api/health', async (_req, res) => {
 });
 
 // ─── Static Client (production) ─────────────────
+// The deployable frontend is the `app` workspace (Vite), which builds to app/dist.
+// At runtime __dirname is packages/server/dist, so app/dist is three levels up.
+// CLIENT_DIST lets you override the location (e.g. a two-service deploy).
 if (process.env.NODE_ENV === 'production') {
-  const clientDist = path.resolve(__dirname, '../../client/dist');
+  const clientDist = process.env.CLIENT_DIST
+    ? path.resolve(process.env.CLIENT_DIST)
+    : path.resolve(__dirname, '../../../app/dist');
   app.use(express.static(clientDist, { maxAge: '1y', immutable: true }));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();

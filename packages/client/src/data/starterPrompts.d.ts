@@ -20,11 +20,17 @@ export interface NudgePrompt {
     benefitLabel?: string;
 }
 /**
+ * The "lead" prompt always shown first in the empty-state assistant, no matter
+ * which step/tool/section the user opened the assistant from. Importing docs is
+ * the fastest way to get started, so it anchors the suggestion list.
+ */
+export declare const LEAD_PROMPT = "Import my tax docs to get started";
+/**
  * Resolve starter prompts for the current step/tool.
- * Priority: nudge prompts (if any) → tool ID → step ID → section → global default.
+ * Priority: lead prompt (always first) → nudge prompts (if any) → tool ID →
+ * step ID → section → global default.
  *
- * When nudges are active, up to 2 nudge-derived prompts are prepended,
- * replacing the least-relevant static prompts to keep the total at 3.
+ * The list is always capped at 3 and de-duplicated.
  */
 export declare function getStarterPrompts(stepId: string, section: string, nudgePrompts?: NudgePrompt[]): string[];
 /**

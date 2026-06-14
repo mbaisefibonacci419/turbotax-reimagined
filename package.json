@@ -15,6 +15,8 @@
     "dev:server": "npm run dev -w packages/server",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "npm run build -w packages/shared && npm run build -w app",
+    "build:railway": "npm run build -w packages/shared && npm run build:vite -w app && npm run build -w packages/server",
+    "start": "NODE_ENV=production node packages/server/dist/index.js",
     "lint": "eslint ."
   },
   "devDependencies": {

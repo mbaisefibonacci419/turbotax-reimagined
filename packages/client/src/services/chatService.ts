@@ -15,7 +15,7 @@ import { useAISettingsStore } from '../store/aiSettingsStore';
 import { getTransport } from './chat/transportFactory';
 import type { ChatTransportStatus, StreamDeltaCallback } from './chat/types';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_BASE ?? (import.meta.env.PROD ? '' : 'http://localhost:3001');
 
 // ─── PII Scan Result ──────────────────────────────
 

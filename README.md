@@ -1,6 +1,6 @@
 # Nimbus: Re-imagined TurboTax
 
-Re-imagined TTO tax prep based on (but not entirely On) the [IRS drect file](https://github.com/IRS-Public/direct-file)  open-source engine. This is a  browser-based tax engine re-written in Typescript with Claude an wrapped around our TTO shell to explore a new tax prep flow from Navigation to Search to the Agentic experience. Tax data never leaves your browser — all calculations happen client-side using my `@nimbus/engine` library (adapted from the IRS Driect-file), encrypted at rest with AES-256-GCM.
+Re-imagined TTO tax prep based on (not entirely) the [IRS drect file](https://github.com/IRS-Public/direct-file) open-source engine. This is a browser-based tax engine written in Typescript with Claude and wrapped around our TTO shell to explore a new tax prep flow from Navigation to Search to the Agentic experience.
 
 ## Prerequisites
 
@@ -43,4 +43,22 @@ npm run start -w packages/server   # run the built server
 npm run lint                    # lint the repo
 npm run test -w packages/server # run server tests
 ```
+
+## Deploy to Railway
+
+This repo deploys as a **single Railway service**: the Express server (`packages/server`)
+serves both the `/api` routes and the built Vite frontend (`app/dist`) from the same origin.
+
+Config files (already in the repo):
+
+- `railway.json` — Nixpacks builder, start command, and `/api/health` health check
+- `nixpacks.toml` — pins Node 20 and the native toolchain `better-sqlite3` needs
+- `.nvmrc` — Node version for local parity
+
+### Notes
+
+- The SQLite DB is used only for rate-limiting and is **ephemeral** (reset on redeploy). No
+  volume is required. Tax data stays client-side in the browser.
+- For a **split deploy** (separate frontend + backend services), set `VITE_API_BASE` to the
+  backend URL at build time and add the frontend origin to `ALLOWED_ORIGINS` on the backend.
 

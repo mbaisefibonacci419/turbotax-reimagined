@@ -16,7 +16,7 @@ import type { AIProvider } from '@nimbus/engine';
 import type { SupportedFormType } from './pdfExtractHelpers';
 import { logOutboundRequest, buildPiiBlockSummary } from './privacyAuditLog';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_BASE ?? (import.meta.env.PROD ? '' : 'http://localhost:3001');
 
 const VISION_MEDIA_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 

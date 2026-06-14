@@ -178,7 +178,7 @@ export const useAISettingsStore = create<AISettingsState>()(
 
       checkServerKey: async () => {
         try {
-          const base = import.meta.env.VITE_API_BASE ?? 'http://localhost:3001';
+          const base = import.meta.env.VITE_API_BASE ?? (import.meta.env.PROD ? '' : 'http://localhost:3001');
           const res = await fetch(`${base}/api/chat/status`);
           const json = res.ok ? await res.json().catch(() => null) : null;
           const hasServerKey = Boolean(json?.data?.hasServerKey);

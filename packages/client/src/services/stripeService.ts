@@ -5,7 +5,7 @@
  * These are pre-configured Stripe Payment Links — clicking opens Stripe's hosted page.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_BASE ?? (import.meta.env.PROD ? '' : 'http://localhost:3001');
 
 // ─── Tip Jar ─────────────────────────────────────
 

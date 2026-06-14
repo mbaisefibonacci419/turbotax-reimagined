@@ -14,7 +14,7 @@ import { scanForPII, parseResponse } from '@nimbus/engine';
 import type { ChatTransport, ChatTransportStatus, StreamDeltaCallback } from './types';
 import { logOutboundRequest, consumePiiTypes, buildPiiBlockSummary } from '../privacyAuditLog';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_BASE ?? (import.meta.env.PROD ? '' : 'http://localhost:3001');
 const TIMEOUT_MS = 120_000;
 
 export class BYOKTransport implements ChatTransport {

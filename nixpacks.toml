@@ -1,0 +1,12 @@
+# Nixpacks build plan for Railway.
+# Pins Node 20 and the native toolchain that better-sqlite3 needs to compile.
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "python3", "gcc", "gnumake"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+# Builds the engine (@nimbus/engine), the Vite frontend (app), and the Express server.
+cmds = ["npm run build:railway"]
