@@ -62,3 +62,6 @@ Config files (already in the repo):
 - For a **split deploy** (separate frontend + backend services), set `VITE_API_BASE` to the
   backend URL at build time and add the frontend origin to `ALLOWED_ORIGINS` on the backend.
 
+### Author
+
+Ugo Ibecheozor
