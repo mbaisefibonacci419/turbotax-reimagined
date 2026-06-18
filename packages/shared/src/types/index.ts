@@ -1854,6 +1854,10 @@ export interface TaxReturn {
   // Proactive nudge dismissals
   dismissedNudges?: string[];
 
+  // Eligibility Determination Agent — persisted screening results (non-PII).
+  // Used to highlight recommended credits/deductions on the overview screens.
+  eligibilityScreening?: EligibilityScreeningRecord;
+
   // Smart Expense Scanner
   expenseScanner?: {
     /** Categories the user opted in for AI scanning. */
@@ -1874,6 +1878,42 @@ export interface TaxReturn {
 
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Eligibility Determination Agent ─────────────────────────
+// Persisted output of the deterministic eligibility screener. Contains NO PII
+// and NO dollar amounts collected from the filer — only categorical statuses,
+// statutory benefit ranges, and plain-language explanations.
+
+export type EligibilityScreeningStatus = 'eligible' | 'likely' | 'need_info' | 'ineligible';
+export type EligibilityScreeningConfidence = 'high' | 'medium' | 'low';
+export type EligibilityScreeningCategory = 'credit' | 'deduction';
+
+export interface EligibilityBenefitRange {
+  max: number;
+  min?: number;
+  perUnit?: string;
+}
+
+export interface EligibilityScreeningResult {
+  id: string;
+  label: string;
+  category: EligibilityScreeningCategory;
+  status: EligibilityScreeningStatus;
+  benefitRange?: EligibilityBenefitRange;
+  confidence: EligibilityScreeningConfidence;
+  qualifyingInputs: string[];
+  why: string;
+  discoveryKey?: string;
+  stepId: string;
+}
+
+export interface EligibilityScreeningRecord {
+  /** ISO timestamp of when screening completed. */
+  completedAt: string;
+  /** Which overview the user launched screening from. */
+  scope: 'credits' | 'deductions';
+  results: EligibilityScreeningResult[];
 }
 
 // ─── State Tax Types ─────────────────────────────────────────

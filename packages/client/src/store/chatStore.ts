@@ -11,7 +11,25 @@
  */
 
 import { create } from 'zustand';
-import type { ChatAction, ChatOption, ChatResponse } from '@nimbus/engine';
+import type {
+  ChatAction,
+  ChatOption,
+  ChatResponse,
+  EligibilityScreeningResult,
+} from '@nimbus/engine';
+import {
+  createSession,
+  planNextQuestion,
+  applyAnswer,
+  type ScreeningSession,
+  type ScreeningScope,
+} from '../services/eligibility/screeningFlow';
+import {
+  screenEligibility,
+  getQualifyingResults,
+  getNeedInfoResults,
+  filterResultsByScope,
+} from '../services/eligibility/eligibilityScreening';
 import {
   sendChatMessage,
   sendChatMessageStream,
@@ -20,7 +38,7 @@ import {
 } from '../services/chatService';
 import { stashPiiTypes } from '../services/privacyAuditLog';
 import { buildChatContext } from '../services/chatContextBuilder';
-import { detectLocalIntent } from '../services/localIntentDetector';
+import { detectLocalIntent, detectEligibilityScreeningIntent } from '../services/localIntentDetector';
 import {
   buildActionsFromExtraction,
   buildExtractionContextText,
@@ -91,6 +109,11 @@ export interface ChatMessageUI {
     discrepancies?: GroundingDiscrepancy[];
     footnote?: string;
   };
+  /** Eligibility Determination Agent results — renders a structured card. */
+  screeningResults?: {
+    scope: 'credits' | 'deductions';
+    results: EligibilityScreeningResult[];
+  };
 }
 
 /** PII warning state for display in the chat UI. */
@@ -121,6 +144,8 @@ interface ChatState {
   chatReturnId: string | null;
   /** PII warning state (shown when PII is detected in a message). */
   piiWarning: PIIWarningState | null;
+  /** Active Eligibility Determination Agent screening session (ephemeral). */
+  screeningSession: ScreeningSession | null;
 
   // ── Actions ──────────────────────────────
   togglePanel: () => void;
@@ -159,6 +184,14 @@ interface ChatState {
   injectProactiveMessage: (message: string, followUpChips?: string[], options?: ChatOption[]) => void;
   /** Persist a proactive nudge category to the return so it is not shown again. */
   dismissProactiveCategory: (category: string) => void;
+
+  // ── Eligibility Determination Agent ──────
+  /** Open the panel and begin conversational eligibility screening. */
+  startScreening: (scope: ScreeningScope, initialQuery?: string) => Promise<void>;
+  /** Apply an answer to the current screening question and advance. */
+  answerScreening: (value: string) => void;
+  /** Abandon the active screening session (keeps any messages already shown). */
+  cancelScreening: () => void;
 }
 
 // ─── Helpers ──────────────────────────────────────
@@ -194,6 +227,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   error: null,
   chatReturnId: null,
   piiWarning: null,
+  screeningSession: null,
 
   togglePanel: () => set({ isOpen: !get().isOpen }),
   openPanel: () => set({ isOpen: true }),
@@ -211,7 +245,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   hydrateForReturn: (returnId: string) => {
     _transitionShownForSkills.clear();
-    set({ chatReturnId: returnId, messages: [], error: null, piiWarning: null });
+    set({ chatReturnId: returnId, messages: [], error: null, piiWarning: null, screeningSession: null });
     // Load persisted history async — messages appear once decrypted
     loadChatHistory(returnId).then((persisted) => {
       // Only apply if we're still on the same return
@@ -225,7 +259,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   clearHistory: () => {
     const returnId = get().chatReturnId;
     _transitionShownForSkills.clear();
-    set({ messages: [], error: null, piiWarning: null });
+    set({ messages: [], error: null, piiWarning: null, screeningSession: null });
     if (returnId) deleteChatHistory(returnId);
   },
   clearError: () => set({ error: null }),
@@ -244,6 +278,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
   sendMessage: async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || get().isLoading) return;
+
+    // ── Eligibility screening interception ──
+    // While a screening session is active, pill/text answers are handled by the
+    // deterministic planner — never sent to the LLM (the LLM is the voice, the
+    // engine is the brain).
+    if (get().screeningSession) {
+      get().answerScreening(trimmed);
+      return;
+    }
+
+    // ── Eligibility agent invocation ──
+    // A "find deductions/credits I qualify for" style query invokes the
+    // Eligibility Determination Agent as a tool: the query is posted as a normal
+    // user message, then the deterministic screening flow takes over.
+    const screeningScope = detectEligibilityScreeningIntent(trimmed);
+    if (screeningScope) {
+      await get().startScreening(screeningScope, trimmed);
+      return;
+    }
 
     const aiMode = useAISettingsStore.getState().mode;
 
@@ -695,7 +748,202 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (current.includes(key)) return;
     useTaxReturnStore.getState().updateField('dismissedNudges', [...current, key]);
   },
+
+  // ── Eligibility Determination Agent ──────────────
+  startScreening: async (scope: ScreeningScope, initialQuery?: string) => {
+    const tr = useTaxReturnStore.getState().taxReturn;
+    if (!tr) return;
+
+    set({ isOpen: true, hasAcceptedDisclaimer: true });
+
+    // Seed the transcript with the user's originating query (e.g. the button
+    // text) so the screening flow reads as a response to a real question.
+    if (initialQuery && initialQuery.trim()) {
+      const userMsg: ChatMessageUI = {
+        id: generateMessageId(),
+        role: 'user',
+        content: initialQuery.trim(),
+        timestamp: Date.now(),
+      };
+      set({ messages: [...get().messages, userMsg] });
+    }
+
+    const session = createSession(scope, tr);
+
+    const question = planNextQuestion(session);
+    if (!question) {
+      // We already know enough from the return — go straight to results.
+      _finishScreening(session, set, get);
+      return;
+    }
+
+    session.pendingQuestionId = question.id;
+    set({ screeningSession: session });
+
+    // The LLM provides a short conversational acknowledgment so the experience
+    // feels AI-assisted; the deterministic planner still owns the questions.
+    // Falls back to fixed copy in Private mode or on any error.
+    set({ isLoading: true });
+    const intro = await _buildScreeningIntro(scope);
+    set({ isLoading: false });
+
+    const msg = _makeScreeningMessage(`${intro}\n\n${question.message}`, {
+      options: question.options,
+      multiSelect: question.multiSelect,
+    });
+    set({ messages: [...get().messages, msg] });
+    _persistMessages(get);
+  },
+
+  answerScreening: (value: string) => {
+    const session = get().screeningSession;
+    if (!session) return;
+
+    // Echo the user's choice as a chat bubble.
+    const userMsg: ChatMessageUI = {
+      id: generateMessageId(),
+      role: 'user',
+      content: value,
+      timestamp: Date.now(),
+    };
+    set({ messages: [...get().messages, userMsg] });
+
+    const next = applyAnswer(session, value);
+    const question = planNextQuestion(next);
+
+    if (question) {
+      next.pendingQuestionId = question.id;
+      set({ screeningSession: next });
+      const msg = _makeScreeningMessage(question.message, {
+        options: question.options,
+        multiSelect: question.multiSelect,
+      });
+      set({ messages: [...get().messages, msg] });
+      _persistMessages(get);
+      return;
+    }
+
+    _finishScreening(next, set, get);
+  },
+
+  cancelScreening: () => set({ screeningSession: null }),
 }));
+
+// ─── Eligibility Screening Helpers ───────────────
+
+/** Build an assistant message carrying screening question options. */
+function _makeScreeningMessage(
+  content: string,
+  extras: { options?: ChatOption[]; multiSelect?: boolean; screeningResults?: ChatMessageUI['screeningResults'] },
+): ChatMessageUI {
+  return {
+    id: generateMessageId(),
+    role: 'assistant',
+    content,
+    timestamp: Date.now(),
+    ...(extras.options && extras.options.length > 0 ? { options: extras.options } : {}),
+    ...(extras.multiSelect ? { multiSelect: true } : {}),
+    ...(extras.screeningResults ? { screeningResults: extras.screeningResults } : {}),
+  };
+}
+
+/** Deterministic intro copy — the guaranteed fallback when the LLM is unavailable. */
+function _fallbackScreeningIntro(scope: ScreeningScope): string {
+  return scope === 'credits'
+    ? "Let's find tax **credits** you may qualify for. I'll ask a few quick questions — your answers here stay in this chat and aren't saved to your return."
+    : "Let's find **deductions** you may qualify for. I'll ask a few quick questions — your answers here stay in this chat and aren't saved to your return.";
+}
+
+/**
+ * Generate a short, conversational acknowledgment for the start of screening.
+ * Routes through the LLM so the flow feels AI-assisted, but only the message
+ * text is used — any actions/options the LLM returns are ignored, since the
+ * deterministic planner owns the questions. Falls back to fixed copy in Private
+ * mode or on any error/abort.
+ */
+async function _buildScreeningIntro(scope: ScreeningScope): Promise<string> {
+  const noun = scope === 'credits' ? 'credits' : 'deductions';
+  const aiMode = useAISettingsStore.getState().mode;
+  if (aiMode === 'private') return _fallbackScreeningIntro(scope);
+
+  try {
+    const taxStore = useTaxReturnStore.getState();
+    if (!taxStore.taxReturn) return _fallbackScreeningIntro(scope);
+
+    const currentStep = taxStore.getCurrentStep();
+    const visibleSteps = taxStore.getVisibleSteps();
+    const stepId = taxStore.activeToolId || currentStep?.id || 'unknown';
+    const section = taxStore.activeToolId ? 'tools' : (currentStep?.section || 'unknown');
+    const context = buildChatContext(
+      taxStore.taxReturn, stepId, section, taxStore.calculation, visibleSteps, WIZARD_STEPS,
+    );
+
+    const prompt =
+      `The user wants to find ${noun} they may qualify for. Reply with ONE short, warm sentence ` +
+      `acknowledging this and noting you'll ask a few quick questions. Do not list any specific ` +
+      `${noun}, do not ask a question yourself, and do not propose any actions — the screening ` +
+      `tool will handle the questions next.`;
+
+    const response = await sendChatMessage(prompt, [], context);
+    const text = (response?.message || '').trim();
+    if (!text) return _fallbackScreeningIntro(scope);
+    return text;
+  } catch {
+    return _fallbackScreeningIntro(scope);
+  }
+}
+
+/**
+ * Run the deterministic screener, persist the non-PII results to the return
+ * (for overview highlighting), and inject the results card into the chat.
+ */
+function _finishScreening(
+  session: ScreeningSession,
+  set: (partial: Partial<ChatState>) => void,
+  get: () => ChatState,
+): void {
+  set({ screeningSession: null });
+
+  // Screening evaluates every benefit, but each entry point only presents its
+  // own category — deductions screening shows deductions, credits shows credits.
+  const scopedResults = filterResultsByScope(screenEligibility(session.inputs), session.scope);
+  const qualifying = getQualifyingResults(scopedResults);
+  const needInfo = getNeedInfoResults(scopedResults);
+
+  // Persist non-PII results to the return so the overview screens can highlight.
+  const taxStore = useTaxReturnStore.getState();
+  if (taxStore.taxReturn) {
+    taxStore.updateField('eligibilityScreening', {
+      completedAt: new Date().toISOString(),
+      scope: session.scope,
+      results: scopedResults,
+    });
+  }
+
+  const noun = session.scope === 'credits' ? 'credits' : 'deductions';
+
+  let summary: string;
+  if (qualifying.length === 0 && needInfo.length === 0) {
+    summary =
+      `Based on your answers, I didn't spot specific ${noun} to flag right now. You can still browse them all on the overview — and if your situation changes, just run this again.`;
+  } else {
+    const parts: string[] = ["Here's what I found based on your answers."];
+    if (qualifying.length > 0) {
+      parts.push(`You **likely qualify for ${qualifying.length}** ${qualifying.length === 1 ? 'benefit' : 'benefits'}.`);
+    }
+    if (needInfo.length > 0) {
+      parts.push(`**${needInfo.length} more** may apply with a little more info.`);
+    }
+    parts.push('Tap any item to jump straight into it. You decide what to include — nothing is selected for you.');
+    summary = parts.join(' ');
+  }
+
+  const msg = _makeScreeningMessage(summary, {
+    screeningResults: { scope: session.scope, results: scopedResults },
+  });
+  set({ messages: [...get().messages, msg] });
+  _persistMessages(get);
+}
 
 // ─── Internal Send Logic ─────────────────────────
 

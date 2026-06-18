@@ -5,6 +5,15 @@ dist/
 
 *.tsbuildinfo
 
+# Emitted TypeScript declaration artifacts in package source trees. The client
+# build is noEmit and the shared library emits real declarations to dist/, so
+# any *.d.ts under src/ is stray `tsc` output that is never imported. Keep
+# hand-written ambient declarations.
+packages/client/src/**/*.d.ts
+packages/shared/src/**/*.d.ts
+!packages/client/src/vite-env.d.ts
+!packages/client/src/speech.d.ts
+
 # OS files
 .DS_Store
 

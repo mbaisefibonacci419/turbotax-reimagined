@@ -11,7 +11,6 @@
 
 import { ArrowUp, Square, Mic, MicOff, Plus, Upload } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import ModelPicker from './ModelPicker';
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 const ACCEPTED_TYPES = '.pdf,.jpg,.jpeg,.png,.tiff,.heic,.heif';
@@ -315,8 +314,8 @@ export default function ChatInput({ onSend, onAttachFile, disabled, isLoading, o
             </button>
           )}
 
-          {/* Model picker */}
-          <ModelPicker />
+          {/* Model picker hidden — model is locked to Claude Sonnet 4.6 (see DEFAULT_AI_SETTINGS). */}
+          {/* <ModelPicker /> */}
 
           <div className="flex-1" />
 

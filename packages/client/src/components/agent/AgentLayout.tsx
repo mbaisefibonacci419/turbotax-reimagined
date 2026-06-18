@@ -149,11 +149,6 @@ export default function AgentLayout() {
             </button>
           )}
 
-          {/* Agent mode badge */}
-          <div className="flex items-center gap-1.5 bg-telos-blue-600/20 border border-telos-blue-600/30 rounded-full px-3 py-1 shrink-0">
-            <MessageSquare className="w-3.5 h-3.5 text-telos-blue-400" />
-            <span className="text-xs font-medium text-telos-blue-300">Agent Mode</span>
-          </div>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
@@ -181,7 +176,6 @@ export default function AgentLayout() {
           `}
         >
           <ReturnSummarySidebar
-            agentState={agentState}
             onSwitchToInterview={handleSwitchToInterview}
             onSwitchToForms={handleSwitchToForms}
           />

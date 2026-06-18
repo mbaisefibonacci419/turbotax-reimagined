@@ -229,11 +229,11 @@ export const WIZARD_STEPS: WizardStep[] = [
   { id: 'gambling_losses_ded', label: 'Gambling Losses', section: 'deductions', condition: (tr) => tr.deductionMethod === 'itemized' && tr.incomeDiscovery['ded_gambling'] === 'yes' },
   { id: 'itemized_deductions', label: 'Itemized Summary', section: 'deductions', condition: wantsItemized, declarativeCondition: { type: 'field_equals', field: 'deductionMethod', value: 'itemized' } },
   // Individual above-the-line adjustment steps
-  { id: 'hsa_contributions', label: 'HSA Contributions', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_hsa'] === 'yes' },
+  { id: 'hsa_contributions', label: 'HSA Contributions', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_hsa'] === 'yes', declarativeCondition: dcDiscovery('ded_hsa') },
   { id: 'archer_msa', label: 'Archer MSA', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_archer_msa'] === 'yes', declarativeCondition: dcDiscovery('ded_archer_msa') },
-  { id: 'student_loan_ded', label: 'Student Loan Interest', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_student_loan'] === 'yes' },
-  { id: 'ira_contribution_ded', label: 'IRA Contributions', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_ira'] === 'yes' },
-  { id: 'educator_expenses_ded', label: 'Educator Expenses', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_educator'] === 'yes' },
+  { id: 'student_loan_ded', label: 'Student Loan Interest', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_student_loan'] === 'yes', declarativeCondition: dcDiscovery('ded_student_loan') },
+  { id: 'ira_contribution_ded', label: 'IRA Contributions', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_ira'] === 'yes', declarativeCondition: dcDiscovery('ded_ira') },
+  { id: 'educator_expenses_ded', label: 'Educator Expenses', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_educator'] === 'yes', declarativeCondition: dcDiscovery('ded_educator') },
   { id: 'alimony_paid', label: 'Alimony Paid', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_alimony'] === 'yes' },
   { id: 'nol_carryforward', label: 'NOL Carryforward', section: 'deductions', condition: (tr) => tr.incomeDiscovery['ded_nol'] === 'yes' },
   // Other deduction situations

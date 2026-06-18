@@ -21,8 +21,8 @@
   --slate-50:  33 38 42;            /* #21262A  — text-primary */
   --slate-100: 33 38 42;            /* #21262A  — headings */
   --slate-200: 55 65 72;            /* #374148 */
-  --slate-300: 93 104 111;          /* #5D686F  — text-secondary */
-  --slate-400: 133 146 153;         /* #859299  — text-tertiary */
+  --slate-300: 69 79 86;            /* #454F56  — text-secondary (darkened for readability) */
+  --slate-400: 100 111 118;         /* #646F76  — text-tertiary (darkened for readability) */
   --slate-500: 173 186 194;         /* #ADBAC2 */
   --slate-600: 195 206 213;         /* #C3CED5  — borders */
   --slate-700: 213 222 227;         /* #D5DEE3  — dividers */
@@ -66,8 +66,8 @@
 
   /* TurboTax shell tokens (used by layout components) */
   --color-text-primary: #21262a;
-  --color-text-secondary: #5d686f;
-  --color-text-tertiary: #859299;
+  --color-text-secondary: #454f56;
+  --color-text-tertiary: #646f76;
   --color-text-inverse: #ffffff;
   --color-action-standard: #205ea3;
   --color-action-standard-hover: #184a82;
@@ -177,6 +177,16 @@ body > div[style*="position: fixed"][style*="inset"] {
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-slate-500;
   }
+}
+
+/* Brief highlight when jumping to a chat message from the session list. */
+@keyframes chat-msg-flash {
+  0%   { background-color: rgba(32, 94, 163, 0.16); }
+  100% { background-color: transparent; }
+}
+.chat-msg-flash {
+  animation: chat-msg-flash 1.2s ease-out;
+  border-radius: 0.75rem;
 }
 
 @layer components {

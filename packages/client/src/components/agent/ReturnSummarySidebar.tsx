@@ -1,109 +1,50 @@
 /**
- * Return Summary Sidebar — Agent Mode
+ * Conversations Sidebar — Agent Mode
  *
- * Shows a live summary of the return organized by skill/phase,
- * with completion status, key data points, and a refund ticker.
+ * Lists navigable conversation sessions derived from the chat history so the
+ * user can jump back into earlier parts of the conversation when they return
+ * to a session. Also shows the live refund/owed ticker and mode-switch links.
  */
 
 import { useMemo } from 'react';
+import { useChatStore } from '../../store/chatStore';
 import { useTaxReturnStore } from '../../store/taxReturnStore';
-import { SKILL_REGISTRY, type SkillRegistryEntry } from '../../services/agent/SkillRegistry';
-import type { AgentState } from '../../services/agent/AgentOrchestrator';
+import {
+  deriveConversationSessions,
+  scrollToChatMessage,
+} from '../../services/agent/conversationSessions';
 import { formatCurrency } from '../../utils/format';
-import { Check, CircleDot, Circle, ChevronRight, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 interface ReturnSummarySidebarProps {
-  agentState: AgentState;
   onSwitchToInterview: () => void;
   onSwitchToForms: () => void;
 }
 
-function SkillStatusIcon({ skillId, agentState }: { skillId: string; agentState: AgentState }) {
-  if (agentState.completed[skillId]) {
-    return <Check className="w-3.5 h-3.5 text-emerald-400" />;
-  }
-  if (skillId === agentState.activeSkill) {
-    return <CircleDot className="w-3.5 h-3.5 animate-pulse" style={{ color: 'var(--color-action-standard)' }} />;
-  }
-  if (agentState.skipped.includes(skillId)) {
-    return <Circle className="w-3.5 h-3.5" style={{ color: 'var(--color-text-tertiary)' }} />;
-  }
-  return <Circle className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />;
-}
-
-function SkillSummaryLine({ skill, agentState }: { skill: SkillRegistryEntry; agentState: AgentState }) {
-  const isCompleted = !!agentState.completed[skill.id];
-  const isActive = skill.id === agentState.activeSkill;
-  const isSkipped = agentState.skipped.includes(skill.id);
-
-  const textColor = isActive || isCompleted
-    ? 'var(--color-text-primary)'
-    : isSkipped
-      ? 'var(--color-text-tertiary)'
-      : 'var(--color-text-secondary)';
-
-  return (
-    <div
-      className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors ${
-        isActive ? 'bg-telos-blue-600/10' : ''
-      } ${isSkipped ? 'line-through' : ''}`}
-      style={{ color: textColor }}
-    >
-      <SkillStatusIcon skillId={skill.id} agentState={agentState} />
-      <span className="truncate">{skill.domain}</span>
-      {isActive && <ChevronRight className="w-3 h-3 ml-auto" style={{ color: 'var(--color-action-standard)' }} />}
-    </div>
-  );
-}
-
-function PhaseGroup({ phase, label, skills, agentState }: {
-  phase: string;
-  label: string;
-  skills: SkillRegistryEntry[];
-  agentState: AgentState;
-}) {
-  if (skills.length === 0) return null;
-
-  return (
-    <div className="mb-3">
-      <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-        {label}
-      </div>
-      {skills.map((skill) => (
-        <SkillSummaryLine key={skill.id} skill={skill} agentState={agentState} />
-      ))}
-    </div>
-  );
+/** Compact relative time label for the conversation list. */
+function relativeTime(ts: number): string {
+  const diff = Date.now() - ts;
+  const min = Math.round(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.round(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 export default function ReturnSummarySidebar({
-  agentState,
   onSwitchToInterview,
   onSwitchToForms,
 }: ReturnSummarySidebarProps) {
+  const messages = useChatStore((s) => s.messages);
   const { calculation } = useTaxReturnStore();
 
-  const phases = useMemo(() => {
-    const groups = [
-      { phase: 'onboarding', label: 'Getting Started' },
-      { phase: 'income', label: 'Income' },
-      { phase: 'self_employment', label: 'Self-Employment' },
-      { phase: 'deductions', label: 'Deductions' },
-      { phase: 'credits', label: 'Credits' },
-      { phase: 'state', label: 'State' },
-      { phase: 'review', label: 'Review' },
-      { phase: 'finish', label: 'Finish' },
-    ];
-
-    return groups.map((g) => ({
-      ...g,
-      skills: SKILL_REGISTRY.filter((s) => s.phase === g.phase),
-    }));
-  }, []);
-
-  const completedCount = Object.keys(agentState.completed).length;
-  const totalSkills = SKILL_REGISTRY.length;
-  const progressPct = Math.round((completedCount / totalSkills) * 100);
+  const sessions = useMemo(
+    () => deriveConversationSessions(messages),
+    [messages],
+  );
 
   const f = calculation?.form1040;
   const isRefund = f && f.refundAmount > 0;
@@ -114,31 +55,46 @@ export default function ReturnSummarySidebar({
       className="h-full flex flex-col text-sm"
       style={{ background: 'var(--color-container-background-accent)', color: 'var(--color-text-primary)' }}
     >
-      {/* Progress bar */}
-      <div className="px-3 pt-3 pb-2 border-b border-slate-700/60">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Your Return</span>
-          <span className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>{progressPct}%</span>
-        </div>
-        <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-telos-blue-500 rounded-full transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Skill list by phase */}
       <div className="flex-1 overflow-y-auto py-2">
-        {phases.map((group) => (
-          <PhaseGroup
-            key={group.phase}
-            phase={group.phase}
-            label={group.label}
-            skills={group.skills}
-            agentState={agentState}
-          />
-        ))}
+        <div
+          className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          Conversations
+        </div>
+        {sessions.length === 0 ? (
+          <p className="px-3 py-1.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+            No conversations yet. Ask the assistant a question to get started.
+          </p>
+        ) : (
+          sessions.map((session) => (
+            <button
+              key={session.id}
+              onClick={() => scrollToChatMessage(session.anchorMessageId)}
+              className="w-full text-left flex items-start gap-2 px-3 py-1.5 rounded-md hover:bg-telos-blue-600/10 transition-colors"
+              title={session.title}
+            >
+              <span
+                className="w-3 h-3 mt-0.5 shrink-0 rounded-full"
+                style={{ backgroundColor: 'var(--color-text-tertiary)' }}
+              />
+              <span className="min-w-0 flex-1">
+                <span
+                  className="block text-xs truncate"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  {session.title}
+                </span>
+                <span
+                  className="block text-[10px]"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                >
+                  {relativeTime(session.startedAt)} · {session.messageCount} message{session.messageCount === 1 ? '' : 's'}
+                </span>
+              </span>
+            </button>
+          ))
+        )}
       </div>
 
       {/* Refund/Owed ticker */}

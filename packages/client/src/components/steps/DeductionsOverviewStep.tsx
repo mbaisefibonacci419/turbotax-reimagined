@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTaxReturnStore } from '../../store/taxReturnStore';
 import { updateReturn } from '../../api/client';
 import StepNavigation from '../layout/StepNavigation';
 import SectionIntro from '../common/SectionIntro';
 import PillToggle from '../common/PillToggle';
+import EligibilityScreeningCard from '../common/EligibilityScreeningCard';
+import { getRecommendedByKey, formatBenefitRange } from '../../services/eligibility/eligibilityScreening';
 import {
   Scissors, HeartPulse, Stethoscope, GraduationCap, PiggyBank, Receipt,
   Home, PencilRuler, HandHeart, Banknote, TrendingUp, RefreshCw,
@@ -258,6 +260,11 @@ export default function DeductionsOverviewStep() {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
+
+  const recommended = useMemo(
+    () => getRecommendedByKey(taxReturn?.eligibilityScreening?.results, 'deduction'),
+    [taxReturn?.eligibilityScreening],
+  );
   if (!taxReturn || !returnId) return null;
 
   const discovery = taxReturn.incomeDiscovery;
@@ -296,9 +303,11 @@ export default function DeductionsOverviewStep() {
     const isExpanded = expandedKey === q.key;
     const isActive = answer === 'yes';
     const hasData = !!summary;
+    const rec = recommended.get(q.key);
+    const showRec = !!rec && answer !== 'yes' && !hasData;
 
     return (
-      <div key={q.key} className="rounded-lg border border-slate-700 overflow-hidden">
+      <div key={q.key} className={`rounded-lg border overflow-hidden ${showRec ? 'border-emerald-500/40' : 'border-slate-700'}`}>
         {/* Accordion header */}
         <button
           onClick={() => setExpandedKey(isExpanded ? null : q.key)}
@@ -319,9 +328,18 @@ export default function DeductionsOverviewStep() {
                   not common
                 </span>
               )}
+              {showRec && (
+                <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">
+                  Recommended
+                </span>
+              )}
             </div>
-            {hasData && (
+            {hasData ? (
               <div className="text-xs text-slate-400 mt-0.5">{summary}</div>
+            ) : showRec && (
+              <div className="text-xs text-emerald-400/90 mt-0.5">
+                {formatBenefitRange(rec!.benefitRange) || 'You may qualify based on your answers'}
+              </div>
             )}
           </div>
 
@@ -396,6 +414,8 @@ export default function DeductionsOverviewStep() {
         description="Let's find ways to lower your taxable income. Select any that apply to you."
       />
 
+      <EligibilityScreeningCard scope="deductions" />
+
 
       {/* Consolidated info callout */}
       <div className="rounded-lg border border-telos-blue-600/30 bg-telos-blue-600/10 mt-4 mb-4 p-4">
@@ -465,7 +485,8 @@ export default function DeductionsOverviewStep() {
         /* Grouped view */
         <div className="space-y-4 mt-4">
           {DEDUCTION_GROUPS.map((group) => {
-            const groupQuestions = DEDUCTION_QUESTIONS.filter(q => q.group === group.id);
+            const groupQuestions = DEDUCTION_QUESTIONS.filter(q => q.group === group.id)
+              .sort((a, b) => (recommended.has(b.key) ? 1 : 0) - (recommended.has(a.key) ? 1 : 0));
             if (groupQuestions.length === 0) return null;
 
             const isCollapsed = collapsedGroups[group.id] ?? false;

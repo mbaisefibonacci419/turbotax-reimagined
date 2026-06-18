@@ -16,6 +16,7 @@ import type { ChatMessageUI } from '../../store/chatStore';
 import type { ChatOption } from '@nimbus/engine';
 import ActionPreview from './ActionPreview';
 import MarkdownMessage from './MarkdownMessage';
+import EligibilityResultsCard from './EligibilityResultsCard';
 import { injectStepLinks } from '../../services/stepLinkInjector';
 
 // ─── Chat bubble color scheme ────────────────────
@@ -279,7 +280,7 @@ export default function ChatMessage({
   const showRegenerate = isLastAssistant && !message.actionsApplied;
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
+    <div id={`chat-msg-${message.id}`} className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3 scroll-mt-4`}>
       <div
         className="group relative max-w-[85%] rounded-2xl px-3.5 py-2.5"
         style={
@@ -357,6 +358,14 @@ export default function ChatMessage({
           <div className="mt-1.5 text-[10px] italic border-t pt-1" style={{ color: '#B45309', borderColor: 'rgba(180, 83, 9, 0.25)' }}>
             {message.verification.footnote}
           </div>
+        )}
+
+        {/* Eligibility screening results (structured card) */}
+        {!isUser && message.screeningResults && (
+          <EligibilityResultsCard
+            scope={message.screeningResults.scope}
+            results={message.screeningResults.results}
+          />
         )}
 
         {/* Action preview (assistant messages only) */}

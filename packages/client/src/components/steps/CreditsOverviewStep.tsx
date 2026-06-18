@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { ReactNode } from 'react';
 import StepWarningsBanner from '../common/StepWarningsBanner';
+import EligibilityScreeningCard from '../common/EligibilityScreeningCard';
+import { getRecommendedByKey, formatBenefitRange } from '../../services/eligibility/eligibilityScreening';
 
 interface CreditQuestion {
   key: string;
@@ -205,6 +207,11 @@ export default function CreditsOverviewStep() {
   const agi = calcResult?.form1040?.agi;
   const totalCredits = calcResult?.credits?.totalCredits || 0;
 
+  const recommended = useMemo(
+    () => getRecommendedByKey(taxReturn.eligibilityScreening?.results, 'credit'),
+    [taxReturn.eligibilityScreening],
+  );
+
   const setAnswer = (key: string, value: 'yes' | 'no' | 'later' | undefined) => {
     updateField('incomeDiscovery', { ...discovery, [key]: value });
   };
@@ -242,9 +249,11 @@ export default function CreditsOverviewStep() {
     const isActive = answer === 'yes';
     const hasData = !!summary;
     const agiExceeded = getAgiExceeded(q);
+    const rec = recommended.get(q.key);
+    const showRec = !!rec && !agiExceeded && answer !== 'yes' && !hasData;
 
     return (
-      <div key={q.key} className={`rounded-lg border border-slate-700 overflow-hidden ${agiExceeded ? 'opacity-50' : ''}`}>
+      <div key={q.key} className={`rounded-lg border overflow-hidden ${agiExceeded ? 'opacity-50' : ''} ${showRec ? 'border-emerald-500/40' : 'border-slate-700'}`}>
         <button
           onClick={() => setExpandedKey(isExpanded ? null : q.key)}
           className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors ${
@@ -269,9 +278,18 @@ export default function CreditsOverviewStep() {
                   auto
                 </span>
               )}
+              {showRec && (
+                <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">
+                  Recommended
+                </span>
+              )}
             </div>
-            {hasData && (
+            {hasData ? (
               <div className="text-xs text-slate-400 mt-0.5">{summary}</div>
+            ) : showRec && (
+              <div className="text-xs text-emerald-400/90 mt-0.5">
+                {formatBenefitRange(rec!.benefitRange) || 'You may qualify based on your answers'}
+              </div>
             )}
           </div>
 
@@ -344,6 +362,8 @@ export default function CreditsOverviewStep() {
 
       <SectionIntro icon={<Award className="w-8 h-8" />} title="Tax Credits" description="Credits directly reduce your tax bill. Select any that apply to you." />
 
+      <EligibilityScreeningCard scope="credits" />
+
 
 
       {/* Consolidated info callout */}
@@ -409,7 +429,8 @@ export default function CreditsOverviewStep() {
       ) : (
         <div className="space-y-4 mt-4">
           {CREDIT_GROUPS.map((group) => {
-            const groupQuestions = CREDIT_QUESTIONS.filter(q => q.group === group.id);
+            const groupQuestions = CREDIT_QUESTIONS.filter(q => q.group === group.id)
+              .sort((a, b) => (recommended.has(b.key) ? 1 : 0) - (recommended.has(a.key) ? 1 : 0));
             if (groupQuestions.length === 0) return null;
 
             const isCollapsed = collapsedGroups[group.id] ?? false;

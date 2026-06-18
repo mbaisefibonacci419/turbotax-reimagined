@@ -25,7 +25,10 @@ vi.mock('../services/documentInventoryService', () => ({
   buildDocumentInventory: (...args: unknown[]) => mockBuildDocumentInventory(...args),
 }));
 
-import { detectLocalIntent } from '../services/localIntentDetector';
+import {
+  detectLocalIntent,
+  detectEligibilityScreeningIntent,
+} from '../services/localIntentDetector';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -145,6 +148,28 @@ describe('detectLocalIntent — deletion (existing)', () => {
     });
     const r = detectLocalIntent('delete the W-2');
     expect(r!.actions[0]).toMatchObject({ type: 'remove_item', itemType: 'w2' });
+  });
+});
+
+describe('detectEligibilityScreeningIntent — button labels invoke the agent', () => {
+  it('Find deductions I qualify for → deductions', () => {
+    expect(detectEligibilityScreeningIntent('Find deductions I qualify for')).toBe('deductions');
+  });
+
+  it('Find credits I qualify for → credits', () => {
+    expect(detectEligibilityScreeningIntent('Find credits I qualify for')).toBe('credits');
+  });
+
+  it('Run deductions screening again → deductions (re-run keeps its scope)', () => {
+    expect(detectEligibilityScreeningIntent('Run deductions screening again')).toBe('deductions');
+  });
+
+  it('Run credits screening again → credits', () => {
+    expect(detectEligibilityScreeningIntent('Run credits screening again')).toBe('credits');
+  });
+
+  it('non-screening message → null (falls through to LLM)', () => {
+    expect(detectEligibilityScreeningIntent('tell me about depreciation')).toBeNull();
   });
 });
 

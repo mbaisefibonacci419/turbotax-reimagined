@@ -283,6 +283,45 @@ function tryFieldReadIntent(trimmed: string): ChatResponse | null {
   };
 }
 
+// ─── Eligibility Screening Intent ────────────────
+
+/**
+ * Detect a request to run the Eligibility Determination Agent and which scope
+ * it targets. Returns 'credits' | 'deductions' when matched, else null.
+ *
+ * This recognizes the entry-point phrasing (including the on-screen button
+ * labels) so the chat send path can invoke the eligibility agent as a tool
+ * rather than the button calling the screener directly. Deterministic — no LLM.
+ */
+export function detectEligibilityScreeningIntent(
+  message: string,
+): 'credits' | 'deductions' | null {
+  const t = normalizeQuestion(message);
+
+  // Must express intent to find / check / screen for benefits.
+  const intentVerb =
+    /\b(find|check|screen|screening|see|what|which|qualify|eligible|run)\b/.test(t);
+  if (!intentVerb) return null;
+
+  const mentionsDeductions = /\bdeduction/.test(t);
+  const mentionsCredits = /\bcredit/.test(t);
+
+  // Explicit button labels.
+  if (/^find deductions i qualify for$/.test(t)) return 'deductions';
+  if (/^find credits i qualify for$/.test(t)) return 'credits';
+
+  // "Run screening again" — infer scope from the last screening if available.
+  if (/^run screening again$/.test(t)) {
+    const record = useTaxReturnStore.getState().taxReturn?.eligibilityScreening;
+    return record?.scope === 'credits' ? 'credits' : 'deductions';
+  }
+
+  if (mentionsDeductions && !mentionsCredits) return 'deductions';
+  if (mentionsCredits && !mentionsDeductions) return 'credits';
+
+  return null;
+}
+
 // ─── Deletion Intent Detection ───────────────────
 
 const DELETE_VERBS = /^(?:delete|remove|drop|get rid of|take out|clear|erase)\b/i;
