@@ -1,0 +1,11 @@
+---
+description: Project onboarding and context for Nimbus (nimbo-tt)
+alwaysApply: true
+---
+
+The canonical agent context for this repo lives in [AGENTS.md](mdc:AGENTS.md).
+
+Read it for: what Nimbus is, the npm-workspaces monorepo layout (package names differ from
+folder names), where the agent state machine and tax engine live, how to run/build/test, and
+the key conventions (engine stays dependency-free, respect `writableFields`, PII is
+stripped server-side, token discipline via `ContextSlicer`).

@@ -11,6 +11,9 @@ import ErrorBoundary from '../components/common/ErrorBoundary';
 import LockForm from '../components/common/LockScreen';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 
+/** Toggle the dashboard action buttons (Start New Return / File Extension / Import). Set to true to re-enable. */
+const SHOW_DASHBOARD_ACTIONS = false;
+
 const FILING_STATUS_LABELS: Record<number, string> = {
   1: 'Single',
   2: 'Married Filing Jointly',
@@ -391,47 +394,49 @@ export default function DashboardPage({ lockMode, onUnlock, lockError }: Dashboa
         })()}
 
         {/* Create new / Import */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row gap-2 sm:justify-center">
-            <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 justify-center w-full sm:w-52 px-4 py-2.5 text-sm font-medium rounded-lg bg-telos-blue-600 hover:bg-telos-blue-500 text-white transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Start New Tax Return
-            </button>
-            <button
-              onClick={handleFileExtension}
-              className="flex items-center gap-2 justify-center w-full sm:w-52 px-4 py-2.5 text-sm font-medium rounded-lg bg-telos-blue-600 hover:bg-telos-blue-500 text-white transition-colors"
-            >
-              <Hourglass className="w-4 h-4" />
-              File an Extension
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 justify-center w-full sm:w-52 px-4 py-2.5 text-sm font-medium rounded-lg bg-telos-blue-600 hover:bg-telos-blue-500 text-white transition-colors"
-            >
-              <Upload className="w-4 h-4" />
-              Import .nimbus File
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".nimbus"
-              onChange={handleFileSelected}
-              className="hidden"
-            />
+        {SHOW_DASHBOARD_ACTIONS && (
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row gap-2 sm:justify-center">
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-2 justify-center w-full sm:w-52 px-4 py-2.5 text-sm font-medium rounded-lg bg-telos-blue-600 hover:bg-telos-blue-500 text-white transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                Start New Tax Return
+              </button>
+              <button
+                onClick={handleFileExtension}
+                className="flex items-center gap-2 justify-center w-full sm:w-52 px-4 py-2.5 text-sm font-medium rounded-lg bg-telos-blue-600 hover:bg-telos-blue-500 text-white transition-colors"
+              >
+                <Hourglass className="w-4 h-4" />
+                File an Extension
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 justify-center w-full sm:w-52 px-4 py-2.5 text-sm font-medium rounded-lg bg-telos-blue-600 hover:bg-telos-blue-500 text-white transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                Import .nimbus File
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".nimbus"
+                onChange={handleFileSelected}
+                className="hidden"
+              />
+            </div>
+            {returns.length === 0 ? (
+              <p className="text-sm text-slate-400 mt-2 sm:pl-0.5">
+                We'll walk you through income, deductions, credits, and filing — step by step, at your own pace.
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 mt-1.5 sm:pl-0.5">
+                Have a .nimbus file? These are encrypted backups you can export from any Nimbus session to transfer your return between devices.
+              </p>
+            )}
           </div>
-          {returns.length === 0 ? (
-            <p className="text-sm text-slate-400 mt-2 sm:pl-0.5">
-              We'll walk you through income, deductions, credits, and filing — step by step, at your own pace.
-            </p>
-          ) : (
-            <p className="text-xs text-slate-400 mt-1.5 sm:pl-0.5">
-              Have a .nimbus file? These are encrypted backups you can export from any Nimbus session to transfer your return between devices.
-            </p>
-          )}
-        </div>
+        )}
 
         {/* Existing returns */}
         <ErrorBoundary>

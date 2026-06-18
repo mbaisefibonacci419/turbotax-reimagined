@@ -2,6 +2,8 @@
 
 Re-imagined TTO tax prep based on (not entirely) the [IRS drect file](https://github.com/IRS-Public/direct-file) open-source engine. This is a browser-based tax engine written in Typescript with Claude and wrapped around our TTO shell to explore a new tax prep flow from Navigation to Search to the Agentic experience.
 
+> **This is a reference/showcase repo — please fork it rather than opening pull requests. PRs to this repo will not be merged.**
+
 ## Prerequisites
 
 - Node.js >= 20.19
