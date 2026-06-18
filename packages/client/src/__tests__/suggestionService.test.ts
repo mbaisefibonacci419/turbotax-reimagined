@@ -337,7 +337,10 @@ describe('getSuggestions', () => {
   });
 
   // ── Student Loan Interest ────────────────────────
-  it('suggests student loan interest for working adults 22-45', () => {
+  // SKIPPED: the student loan interest suggestion is temporarily disabled in
+  // suggestionService.ts per product request. Re-enable this test when the
+  // suggestion logic is uncommented.
+  it.skip('suggests student loan interest for working adults 22-45', () => {
     const tr = makeTaxReturn({
       dateOfBirth: '1995-01-01', // age 30 in 2025
       incomeDiscovery: {},

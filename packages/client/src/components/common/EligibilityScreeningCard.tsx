@@ -7,7 +7,7 @@
  * assistant panel. Dismissible per scope.
  */
 
-import { Sparkles, X, ArrowRight, RotateCcw } from 'lucide-react';
+import { X, ArrowRight, RotateCcw } from 'lucide-react';
 import { useTaxReturnStore } from '../../store/taxReturnStore';
 import { useChatStore } from '../../store/chatStore';
 
@@ -56,9 +56,6 @@ export default function EligibilityScreeningCard({ scope }: Props) {
       </button>
 
       <div className="flex items-start gap-3 pr-6">
-        <div className="shrink-0 w-9 h-9 rounded-lg bg-telos-blue-600/20 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-telos-blue-300" />
-        </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-slate-200">
             Not sure which {noun} apply to you?
@@ -88,7 +85,7 @@ export default function EligibilityScreeningCard({ scope }: Props) {
               className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full
                          bg-white text-slate-100 group-hover:bg-white/90 transition-colors"
             >
-              {hasResults ? <RotateCcw className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {hasResults && <RotateCcw className="w-3.5 h-3.5" />}
               {hasResults ? 'Run screening again' : `Find ${noun} I qualify for`}
               {!hasResults && <ArrowRight className="w-3.5 h-3.5" />}
             </span>

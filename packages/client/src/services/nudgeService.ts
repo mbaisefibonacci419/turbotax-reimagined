@@ -56,6 +56,11 @@ const SECTION_ORDER = ['my_info', 'income', 'self_employment', 'deductions', 'cr
  * Compute proactive nudges from the current tax return state.
  * Pure function — deterministic, no side effects.
  *
+ * Suggestion nudges are suppressed on the deductions/credits overview screens
+ * (owned by the Eligibility Determination Agent) and for any item the agent has
+ * already screened, to avoid duplicate or contradictory prompts. Milestone
+ * nudges are not affected.
+ *
  * @param currentStepId - Current wizard step (for context relevance)
  * @param currentSection - Current wizard section (for priority boosting)
  */
@@ -69,10 +74,29 @@ export function computeNudges(
   const suggestions = getSuggestions(taxReturn, calculation);
   const dismissed = new Set(dismissedIds);
 
+  // The Eligibility Determination Agent owns discovery on the deductions and
+  // credits overview screens. Suppress passive suggestion nudges there so the
+  // filer isn't shown two competing entry points for the same goal. Milestone
+  // nudges are unaffected.
+  const isAgentOverviewScreen =
+    currentStepId === 'deductions_overview' || currentStepId === 'credits_overview';
+
+  // Reconcile with the agent: once a filer has run screening, the agent has
+  // already evaluated a set of items (by discovery key). Hide passive
+  // suggestions for those same items so a heuristic nudge can't contradict the
+  // agent's conclusion. Only keys within the screened scope are considered.
+  const screenedKeys = new Set(
+    (taxReturn.eligibilityScreening?.results || [])
+      .map((r) => r.discoveryKey)
+      .filter((k): k is string => !!k),
+  );
+
   const nudges: ProactiveNudge[] = [];
 
   for (const s of suggestions) {
     if (dismissed.has(s.id)) continue;
+    if (isAgentOverviewScreen) continue;
+    if (s.discoveryKey && screenedKeys.has(s.discoveryKey)) continue;
 
     const priority = scorePriority(s, currentSection);
     const chatPrompt = buildChatPrompt(s);
@@ -177,25 +201,27 @@ function detectMilestones(
   const milestones: ProactiveNudge[] = [];
 
   // Milestone: all income entered, moving to deductions
-  if (currentSection === 'deductions') {
-    const hasIncome = (taxReturn.w2Income || []).length > 0 ||
-      (taxReturn.income1099NEC || []).length > 0 ||
-      (taxReturn.income1099DIV || []).length > 0;
-    const agi = calculation?.form1040?.agi;
-
-    if (hasIncome && agi && agi > 0) {
-      milestones.push({
-        id: 'milestone_deductions_start',
-        source: 'milestone',
-        priority: 'medium',
-        title: 'Time to maximize your deductions',
-        description: `Your income is entered (AGI: ~$${Math.round(agi / 1000) * 1000 > 0 ? (Math.round(agi / 1000) * 1000).toLocaleString() : agi.toLocaleString()}). Now let's find every deduction you're eligible for.`,
-        chatPrompt: 'What deductions am I eligible for based on my income and situation?',
-        dismissible: true,
-        variant: 'info',
-      });
-    }
-  }
+  // TEMPORARILY DISABLED: suppressing the "Time to maximize your deductions"
+  // milestone nudge per product request. Re-enable by uncommenting this block.
+  // if (currentSection === 'deductions') {
+  //   const hasIncome = (taxReturn.w2Income || []).length > 0 ||
+  //     (taxReturn.income1099NEC || []).length > 0 ||
+  //     (taxReturn.income1099DIV || []).length > 0;
+  //   const agi = calculation?.form1040?.agi;
+  //
+  //   if (hasIncome && agi && agi > 0) {
+  //     milestones.push({
+  //       id: 'milestone_deductions_start',
+  //       source: 'milestone',
+  //       priority: 'medium',
+  //       title: 'Time to maximize your deductions',
+  //       description: `Your income is entered (AGI: ~$${Math.round(agi / 1000) * 1000 > 0 ? (Math.round(agi / 1000) * 1000).toLocaleString() : agi.toLocaleString()}). Now let's find every deduction you're eligible for.`,
+  //       chatPrompt: 'What deductions am I eligible for based on my income and situation?',
+  //       dismissible: true,
+  //       variant: 'info',
+  //     });
+  //   }
+  // }
 
   // Milestone: review section — final check
   if (currentSection === 'review' && calculation) {

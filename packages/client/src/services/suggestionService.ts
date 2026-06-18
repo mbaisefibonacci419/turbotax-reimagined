@@ -218,25 +218,27 @@ export function getSuggestions(
   }
 
   // ── Student Loan Interest: younger filer, no deduction claimed ─────────
-  if (isUnclaimed('ded_student_loan') && (taxReturn.studentLoanInterest || 0) === 0) {
-    const filerAge = getAgeAtEndOfYear(taxReturn.dateOfBirth, taxReturn.taxYear);
-    const hasEarnedIncome = (taxReturn.w2Income || []).length > 0;
-    // Suggest for working adults 22-45 (typical student loan repayment age)
-    if (filerAge !== undefined && filerAge >= 22 && filerAge <= 45 && hasEarnedIncome && agi != null) {
-      const phaseOutEnd = isMFJ ? 200000 : 100000;
-      if (agi < phaseOutEnd) {
-        suggestions.push({
-          id: 'student_loan',
-          type: 'deduction',
-          title: 'Student Loan Interest',
-          description: 'If you paid interest on student loans, you can deduct up to $2,500 — even without itemizing.',
-          discoveryKey: 'ded_student_loan',
-          stepId: 'student_loan_ded',
-          confidence: 'medium',
-        });
-      }
-    }
-  }
+  // TEMPORARILY DISABLED: suppressing the "Student Loan Interest" proactive
+  // nudge card per product request. Re-enable by uncommenting this block.
+  // if (isUnclaimed('ded_student_loan') && (taxReturn.studentLoanInterest || 0) === 0) {
+  //   const filerAge = getAgeAtEndOfYear(taxReturn.dateOfBirth, taxReturn.taxYear);
+  //   const hasEarnedIncome = (taxReturn.w2Income || []).length > 0;
+  //   // Suggest for working adults 22-45 (typical student loan repayment age)
+  //   if (filerAge !== undefined && filerAge >= 22 && filerAge <= 45 && hasEarnedIncome && agi != null) {
+  //     const phaseOutEnd = isMFJ ? 200000 : 100000;
+  //     if (agi < phaseOutEnd) {
+  //       suggestions.push({
+  //         id: 'student_loan',
+  //         type: 'deduction',
+  //         title: 'Student Loan Interest',
+  //         description: 'If you paid interest on student loans, you can deduct up to $2,500 — even without itemizing.',
+  //         discoveryKey: 'ded_student_loan',
+  //         stepId: 'student_loan_ded',
+  //         confidence: 'medium',
+  //       });
+  //     }
+  //   }
+  // }
 
   // ── W-2 Box 12 Code W: HSA employer contribution ──────────────────────
   // If any W-2 has code W in Box 12, the employer contributed to an HSA.
